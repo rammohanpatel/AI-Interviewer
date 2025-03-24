@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {vapi} from "@/lib/vapi.sdk";
+import {useRouter} from 'next/navigation';
+import { useState,useEffect } from "react";
 
 
 enum CallStatus {
@@ -11,16 +14,95 @@ enum CallStatus {
     CONNECTING = 'CONNECTING'
 }
 
-const Agent = ({user,userId,type}:AgentProps)=>{
-    const callStatus = CallStatus.FINISHED;
-    const isSpeaking  = true;
+interface SavedMessages {
+    role: 'user' | 'system' | 'assistant';
+    content : string;
+}
 
-    const messages = [
-        'What is your name? ',
-        'My name is Ram Mohan Patel.'
-    ]
+const Agent = ({userName,userId,type}:AgentProps)=>{
+    const router = useRouter();
+    const [callStatus,setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
+    const [isSpeaking,setIsSpeaking] = useState(false);
+    const [messages, setMessages] = useState<SavedMessages[]>([]);
+    const [lastMessage, setLastMessage] = useState<string>('');
+    
+    useEffect(()=>{
+        const callStart = ()=>{
+            setCallStatus(CallStatus.ACTIVE);
+        }
+        const callEnd = ()=>{
+            setCallStatus(CallStatus.FINISHED);
+        }
+        const onMessage = (message:Message)=>{
+            if(message.type === "transcript" && message.transcriptType === "final"){
+                const newMessage = {role:message.role, content:message.transcript};
+                setMessages((prevMessages) => [...prevMessages, newMessage]);
+            }
+        }
 
-    const lastMessage = messages[messages.length-1];
+        const onSpeechStart = ()=>{
+            console.log("SpeechStart");
+            setIsSpeaking(true);
+        }
+
+        const onSpeechEnd = ()=>{
+            console.log("SpeechEnd");
+            setIsSpeaking(false);
+        }
+
+        const onError = (error:Error)=>{
+            console.log("Error",error);
+        }
+
+        vapi.on("call-start",callStart);
+        vapi.on("call-end",callEnd);
+        vapi.on("message",onMessage);
+        vapi.on("speech-start",onSpeechStart);
+        vapi.on("speech-end",onSpeechEnd);
+        vapi.on("error",onError);
+
+        return ()=>{
+            vapi.off("call-start",callStart);
+            vapi.off("call-end",callEnd);
+            vapi.off("message",onMessage);
+            vapi.off("speech-start",onSpeechStart);
+            vapi.off("speech-end",onSpeechEnd);
+            vapi.off("error",onError);
+        }
+
+    },[]);
+
+    useEffect(()=>{
+        if(messages.length > 0){
+            setLastMessage(messages[messages.length - 1].content);
+        }
+
+        if(callStatus === CallStatus.FINISHED){
+            if(type=="generate"){
+                router.push("/");
+            }
+            
+        }
+    },[messages,callStatus,type,userId]);
+
+    const handleCall = async()=>{
+        if(callStatus === CallStatus.INACTIVE){
+            setCallStatus(CallStatus.CONNECTING);
+            await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
+                variableValues : {
+                    username : userName,
+                    userid : userId
+                }
+            });
+        }
+    }
+
+    const handleEndCall = ()=>{
+        if(callStatus === CallStatus.ACTIVE){
+             vapi.stop();
+        }
+    }
+
 
     return (
         <>
@@ -48,7 +130,7 @@ const Agent = ({user,userId,type}:AgentProps)=>{
                       height={540}
                       className="object-cover rounded-full size-[120px]"
                     />
-                    <h3>{user}</h3>
+                    <h3>{userName}</h3>
                 </div>
             </div>
           </div>
@@ -67,14 +149,17 @@ const Agent = ({user,userId,type}:AgentProps)=>{
 
           <div className="w-full flex justify-center">
             {callStatus !== 'ACTIVE' ?(
-                <button className="relative btn-call">
-                    <span className={cn('absolute animate-ping rounded-full opacity-75', callStatus!=='CONNECTING' & 'hidden')} />
+                <button className="relative btn-call" onClick={handleCall}>
+                    <span className={cn('absolute animate-ping rounded-full opacity-75', callStatus!=='CONNECTING' && 'hidden')} />
                     <span>
                         {callStatus === 'INACTIVE' || callStatus === 'FINISHED' ? 'Call':'...'}
                     </span>
                 </button>
             ):(
-                <button className="btn-disconnect">
+                <button 
+                className="btn-disconnect"
+                onClick = {handleEndCall}
+                >
                     End 
                 </button>
             )}

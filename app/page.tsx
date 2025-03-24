@@ -12,7 +12,13 @@ const Home = async() => {
   const isUserAuthenticated = await isAuthenticated();
   if(!isUserAuthenticated) redirect('/sign-in');
   return (
-    <>
+    <div className='root-layout'>
+      <nav>
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/logo.svg" alt="MockMate Logo" width={38} height={32} />
+            <h2 className="text-primary-100">AI Interviewer</h2>
+          </Link>
+      </nav>
       <section className='card-cta'>
          <div className='flex flex-col gap-6 max-w-lg'>
            <h2>
@@ -35,7 +41,7 @@ const Home = async() => {
          />
       </section>
 
-      <section className = "flex flex-col gap-6 m-8">
+      <section className = "flex flex-col gap-6 mt-8">
         <h2>
           Your Interviews
         </h2>
@@ -46,7 +52,7 @@ const Home = async() => {
         </div>
       </section>
 
-      <section className = "flex flex-col gap-6 m-8">
+      <section className = "flex flex-col gap-6 mt-8">
         <h2>
           Your Interviews
         </h2>
@@ -56,7 +62,7 @@ const Home = async() => {
           ))}
         </div>
       </section>
-    </>
+    </div>
   )
 }
 
