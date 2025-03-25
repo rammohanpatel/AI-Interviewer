@@ -12,34 +12,80 @@ export async function getInterviewById(id:string):Promise<Interview | null> {
     return interview.data() as Interview | null;
 }
 
-export async function getInterviewsByUserId(userId:string):Promise<Interview[] | null>{
-    const interviews = await db.collection("interviews")
-                                .where("userId","==",userId)
-                                .orderBy("createdAt","desc")
-                                .get();
+// export async function getInterviewsByUserId(userId:string):Promise<Interview[] | null>{
+//     const interviews = await db.collection("interviews")
+//                                 .where("userId","==",userId)
+//                                 .orderBy("createdAt","desc")
+//                                 .get();
     
-    return interviews.docs.map((doc)=>({
-        id:doc.id,
-        ...doc.data()
-    })) as Interview[]
-}
+//     return interviews.docs.map((doc)=>({
+//         id:doc.id,
+//         ...doc.data()
+//     })) as Interview[]
+// }
 
-export async function getLatestInterviews(params:GetLatestInterviewsParams):Promise<Interview[] | null>{
-    const {userId, limit=20} = params;
+export async function getCompletedInterviews(params: GetCompletedInterviewsParams): Promise<{ interviewsWithFeedback: Interview[]; interviewsWithoutFeedback: Interview[] }> {
+    const { userId} = params;
 
-    const interviews = await db.collection("interviews")
-                                .orderBy("createdAt","desc")
-                                .where("finalized","==",true)
-                                .where("userId","!=",userId)
-                                .limit(limit)
-                                .get();
+    const interviewsSnapshot = await db.collection("interviews")
+        .where("userId", "==", userId) 
+        .where("finalized", "==", true) 
+        .orderBy("createdAt", "desc")
+        .get();
 
-    
-    return interviews.docs.map((doc)=>({
-        id:doc.id,
+    const interviews = interviewsSnapshot.docs.map((doc) => ({
+        id: doc.id,
         ...doc.data(),
     })) as Interview[];
+
+    // Check if feedback exists for each interview
+    const feedbackPromises = interviews.map(async (interview) => {
+        const feedbackSnapshot = await db.collection("feedback")
+            .where("interviewId", "==", interview.id)
+            .get();
+
+        return { interview, hasFeedback: !feedbackSnapshot.empty };
+    });
+
+    const results = await Promise.all(feedbackPromises);
+
+    // Separate interviews based on feedback existence
+    const interviewsWithFeedback = results.filter(({ hasFeedback }) => hasFeedback).map(({ interview }) => interview);
+    const interviewsWithoutFeedback = results.filter(({ hasFeedback }) => !hasFeedback).map(({ interview }) => interview);
+
+    return { interviewsWithFeedback, interviewsWithoutFeedback };
 }
+
+
+
+// export async function getCompletedInterviews(params:GetCompletedInterviewsParams):Promise<Interview[] | null>{
+//     const {userId} = params;
+
+//     const userInterviews = await db.collection("interviews")
+//                                 .orderBy("createdAt","desc")
+//                                 .where("finalized","==",true)
+//                                 .where("userId","==",userId)
+//                                 .get();
+
+//     const interviews = userInterviews.docs.map((doc)=>({
+//         id:doc.id,
+//         ...doc.data(),
+//     })) as Interview[];
+
+    
+//     const interviewsWithFeedback = interviews.map(async(interview)=>{
+//         const feedbackInterviews = await db.collection('feedback')
+//                         .where('interviewId',"==",interview.id)
+//                         .get()
+
+//         return feedbackInterviews.empty ? null:interview;                        
+//     })
+
+//     const results = await Promise.all(interviewsWithFeedback);
+
+//     return results.filter((interview):interview is Interview=> interview !== null);
+
+// }
 
 export async function createFeedback(params:CreateFeedbackParams){
     const {interviewId, userId, transcript} = params;

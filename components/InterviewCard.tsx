@@ -55,7 +55,7 @@ const InterviewCard = async({id, userId, role, type, techstack,createdAt}:Interv
                 <DisplayTechIcons techStack={techstack} />
                 <Button >
                     <Link href={feedback 
-                    ?`/interview/${id}/feedback?.id}`
+                    ?`/interview/${id}/feedback`
                     :`/interview/${id}`}>
                         {feedback ? "Review" : "Start"}
                     </Link>

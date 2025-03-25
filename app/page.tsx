@@ -5,7 +5,7 @@ import React from 'react'
 import InterviewCard from '@/components/InterviewCard'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, isAuthenticated } from '@/lib/actions/auth.action'
-import { getInterviewsByUserId,getLatestInterviews } from "@/lib/actions/general.action";
+import { getCompletedInterviews} from "@/lib/actions/general.action";
 
 
 const Home = async() => {
@@ -14,14 +14,11 @@ const Home = async() => {
 
   const user = await getCurrentUser();
 
-  const [userInterviews,allInterviews] = await Promise.all([
-    getInterviewsByUserId(user?.id!),
-    getLatestInterviews({userId:user?.id!})
-  ])
+  const { interviewsWithFeedback, interviewsWithoutFeedback } = await getCompletedInterviews({userId:user?.id!});
 
 
-  const hasPastInterviews = userInterviews?.length! > 0;
-  const hasUpcomingInterviews = allInterviews?.length! > 0;
+  const hasInterviewsWithFeedback = interviewsWithFeedback?.length! > 0;
+  const hasInterviewsWithoutFeedback = interviewsWithoutFeedback?.length! > 0;
 
   return (
     <div className='root-layout'>
@@ -40,7 +37,7 @@ const Home = async() => {
             Practice real interview questions and get instant feedback
            </p>
            <Button asChild className='btn-primary max-sm:w-full'>
-             <Link href="/interview">Start an Interview</Link>
+             <Link href="/interview">Create Your Interview</Link>
             </Button>
          </div>
         
@@ -55,32 +52,32 @@ const Home = async() => {
 
       <section className = "flex flex-col gap-6 mt-8">
         <h2>
-          Your Interviews
+          Recently Prepared Interviews
         </h2>
         <div className='interviews-section'>
-          { hasPastInterviews?(
-            userInterviews?.map((interview)=>(
+          { hasInterviewsWithoutFeedback?(
+            interviewsWithoutFeedback?.map((interview)=>(
               <InterviewCard key={interview.id} {...interview} />
             ))
           ):(
-            <p> 
-              You don&apos;t have any past interviews
-            </p>
+            <Button asChild className='btn-primary max-sm:w-full'>
+             <Link href="/interview">Prepare Your First Interview</Link>
+            </Button>
           )}
         </div>
       </section>
 
       <section className = "flex flex-col gap-6 mt-8">
         <h2>
-          Take Interviews
+          Completed Interviews
         </h2>
         <div className='interviews-section'>
-          { hasUpcomingInterviews?(
-            allInterviews?.map((interview)=>(
+          { hasInterviewsWithFeedback?(
+            interviewsWithFeedback?.map((interview)=>(
               <InterviewCard key={interview.id} {...interview} />
             ))
           ):(
-            <p>No available interviews</p>
+            <p>You have&apos;t given any interviews</p>
           )}
         </div>
       </section>
