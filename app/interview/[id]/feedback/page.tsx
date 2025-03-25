@@ -179,7 +179,7 @@ const FeedbackPage = async ({ params }: RouteParams) => {
             {/* <button className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors flex-1 flex justify-center items-center">
               Download Report
             </button> */}
-            <DownloadFeedback feedback={feedback} interviewId={id} />
+            <DownloadFeedback feedback={feedback} interviewId={id} user={user} />
 
             <button className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md transition-colors flex-1 flex justify-center items-center">
               Retake Interview

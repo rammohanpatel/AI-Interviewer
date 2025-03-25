@@ -7,6 +7,7 @@ import {useRouter} from 'next/navigation';
 import { useState,useEffect } from "react";
 import { interviewer } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
+import { toast } from "sonner";
 
 
 enum CallStatus {
@@ -54,6 +55,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
 
         const onError = (error:Error)=>{
             console.log("Error",error);
+            toast.error(`Error : ${error.message}`);
         }
 
         vapi.on("call-start",callStart);
@@ -190,7 +192,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
                 <button className="relative btn-call" onClick={handleCall}>
                     <span className={cn('absolute animate-ping rounded-full opacity-75', callStatus!=='CONNECTING' && 'hidden')} />
                     <span>
-                        {callStatus === 'INACTIVE' || callStatus === 'FINISHED' ? 'Call':'...'}
+                        {callStatus === 'INACTIVE' || callStatus === 'FINISHED' ? 'Start Interview':'End Interview'}
                     </span>
                 </button>
             ):(
@@ -198,7 +200,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
                 className="btn-disconnect"
                 onClick = {handleEndCall}
                 >
-                    End 
+                    End Interview
                 </button>
             )}
           </div>

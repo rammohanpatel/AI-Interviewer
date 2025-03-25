@@ -29,7 +29,7 @@ export default async function Page({params}:RouteParams){
                      height={40}
                      className="object-cover rounded-full size-[40px]" />
 
-                     <h3>{interview.role} Interview</h3>
+                     <h3 className="text-2xl font-semibold capitalize">{interview.role} Interview</h3>
                 </div>
                 <DisplayTechIcons techStack={interview.techstack} />
             </div>

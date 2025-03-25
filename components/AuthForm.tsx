@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React,{useState} from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -21,6 +21,7 @@ const authFormSchema = (type:FormType) => z.object({
 })
 
 const AuthForm = ({ type }: { type: FormType }) => {
+    const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
 
@@ -35,6 +36,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
     })
 
     const onSubmit  = async (data: z.infer<typeof formSchema>) => {
+        setIsLoading(true);
         try {
             if(type==="sign-up"){
                 const { name,email,password} = data;
@@ -91,9 +93,19 @@ const AuthForm = ({ type }: { type: FormType }) => {
                 toast.success("Sign-in successful")
                 router.push('/');
             }
-        } catch (error) {
+        } catch (error:any) {
             console.error(error);
-            toast.error(`There was an error: ${error}`);
+            if(error.code === "auth/invalid-credential"){
+                toast.error("Invalid credentials. Please try again");
+            }
+            else if(error.code === "auth/email-already-in-use"){
+                toast.error("Email already in use. Please try with another email");
+            }
+            else{
+                toast.error("Something went wrong. Please try again");
+            }
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -135,7 +147,11 @@ const AuthForm = ({ type }: { type: FormType }) => {
                         />
 
                         <Button type="submit" className='btn'>
-                            {type === "sign-up" ? "Sign Up" : "Sign In"}
+                            { isLoading===true ?
+                                ( <span className="animate-spin rounded-full h-8 w-8  border-t-2 border-b-2 border-blue-900 " />)
+                                :
+                                ( type === "sign-up" ? "Sign Up" : "Sign In"
+                            )}
                         </Button>
                     </form>
                 </Form>

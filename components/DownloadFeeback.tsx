@@ -22,9 +22,10 @@ interface FeedbackData {
 interface DownloadFeedbackProps {
   feedback: FeedbackData
   interviewId: string
+  user:User
 }
 
-const DownloadFeedback = ({ feedback, interviewId }: DownloadFeedbackProps) => {
+const DownloadFeedback = ({ feedback, interviewId, user }: DownloadFeedbackProps) => {
   const handleDownload = () => {
     const doc = new jsPDF()
 
@@ -44,6 +45,7 @@ const DownloadFeedback = ({ feedback, interviewId }: DownloadFeedbackProps) => {
     doc.setTextColor(100, 100, 100)
     doc.text(`Generated on: ${formattedDate}`, 14, 30)
     doc.text(`Interview ID: ${interviewId}`, 14, 36)
+    doc.text(`Candidate : ${user.name}`, 14, 42)
 
     // Add overall score
     doc.setFontSize(16)
