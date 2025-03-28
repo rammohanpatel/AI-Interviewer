@@ -3,7 +3,6 @@
 import {generateObject} from "ai";
 import {google} from "@ai-sdk/google";
 import { feedbackSchema } from "@/constants";
-
 import {db} from "@/firebase/admin";
 
 
@@ -11,18 +10,6 @@ export async function getInterviewById(id:string):Promise<Interview | null> {
     const interview = await db.collection("interviews").doc(id).get();
     return interview.data() as Interview | null;
 }
-
-// export async function getInterviewsByUserId(userId:string):Promise<Interview[] | null>{
-//     const interviews = await db.collection("interviews")
-//                                 .where("userId","==",userId)
-//                                 .orderBy("createdAt","desc")
-//                                 .get();
-    
-//     return interviews.docs.map((doc)=>({
-//         id:doc.id,
-//         ...doc.data()
-//     })) as Interview[]
-// }
 
 export async function getCompletedInterviews(params: GetCompletedInterviewsParams): Promise<{ interviewsWithFeedback: Interview[]; interviewsWithoutFeedback: Interview[] }> {
     const { userId} = params;
@@ -55,37 +42,6 @@ export async function getCompletedInterviews(params: GetCompletedInterviewsParam
 
     return { interviewsWithFeedback, interviewsWithoutFeedback };
 }
-
-
-
-// export async function getCompletedInterviews(params:GetCompletedInterviewsParams):Promise<Interview[] | null>{
-//     const {userId} = params;
-
-//     const userInterviews = await db.collection("interviews")
-//                                 .orderBy("createdAt","desc")
-//                                 .where("finalized","==",true)
-//                                 .where("userId","==",userId)
-//                                 .get();
-
-//     const interviews = userInterviews.docs.map((doc)=>({
-//         id:doc.id,
-//         ...doc.data(),
-//     })) as Interview[];
-
-    
-//     const interviewsWithFeedback = interviews.map(async(interview)=>{
-//         const feedbackInterviews = await db.collection('feedback')
-//                         .where('interviewId',"==",interview.id)
-//                         .get()
-
-//         return feedbackInterviews.empty ? null:interview;                        
-//     })
-
-//     const results = await Promise.all(interviewsWithFeedback);
-
-//     return results.filter((interview):interview is Interview=> interview !== null);
-
-// }
 
 export async function createFeedback(params:CreateFeedbackParams){
     const {interviewId, userId, transcript} = params;
@@ -125,9 +81,21 @@ export async function createFeedback(params:CreateFeedbackParams){
             createdAt : new Date().toISOString(),
         }
 
-        const newFeedback = await db.collection('feedback').add(feedback);
-
-        return {success:true, feedbackId:newFeedback.id};
+        const feedbackQuery = await db.collection('feedback')
+                                      .where("interviewId","==",interviewId)
+                                      .where("userId","==",userId)
+                                      .get();
+        
+        if(!feedbackQuery.empty){
+            const feedbackDoc = feedbackQuery.docs[0];
+            await db.collection('feedback').doc(feedbackDoc.id).update(feedback);
+            return  {success:true, feedbackId:feedbackDoc.id, message:'Feedback Updated'};
+        }
+        else{
+            const newFeedback = await db.collection('feedback').add(feedback);
+            return {success:true, feedbackId:newFeedback.id,message:'Feedback Added'}
+        }
+        
     } catch (error) {
         console.log('Error saving feedback',error);
         return {success:false};
@@ -146,6 +114,5 @@ export async function getFeedbackByInterviewId(params:GetFeedbackByInterviewIdPa
     if(feedback.empty) return null;
 
     const feedbackDoc = feedback.docs[0];
-
     return {id:feedbackDoc.id,...feedbackDoc.data()} as Feedback;
 }

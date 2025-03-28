@@ -1,39 +1,14 @@
-// import React from 'react'
-// import {redirect} from "next/navigation";
-// import { getCurrentUser } from '@/lib/actions/auth.action';
-// import { getInterviewById, getFeedbackByInterviewId } from '@/lib/actions/general.action';
-
-// const page = async({params}:RouteParams) => {
-//     const { id } = params;
-//     const user = await getCurrentUser();
-
-//     const interview = await getInterviewById(id);
-//     if(!interview) return redirect("/");
-
-//     const feedback = await getFeedbackByInterviewId({interviewId:id,userId:user?.id!})
-
-//     console.log(feedback);
-
-//   return (
-//     <div>
-
-//     </div>
-//   )
-// }
-
-// export default page
-
-
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/actions/auth.action"
 import { getInterviewById, getFeedbackByInterviewId } from "@/lib/actions/general.action"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ChevronRight, Star, TrendingUp, TrendingDown, Calendar, Award, AlertTriangle } from "lucide-react"
 import DownloadFeedback from "@/components/DownloadFeeback"
-
+import Link from "next/link"
 
 
 const FeedbackPage = async ({ params }: RouteParams) => {
@@ -176,14 +151,12 @@ const FeedbackPage = async ({ params }: RouteParams) => {
 
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* <button className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors flex-1 flex justify-center items-center">
-              Download Report
-            </button> */}
             <DownloadFeedback feedback={feedback} interviewId={id} user={user} />
-
-            <button className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md transition-colors flex-1 flex justify-center items-center">
-              Retake Interview
-            </button>
+            <Button asChild className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md transition-colors flex-1 flex justify-center items-center">
+              <Link href = {`/interview/${id}`} >
+                Retake Interview
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
