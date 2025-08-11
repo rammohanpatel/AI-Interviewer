@@ -182,66 +182,117 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
 
 
     return (
-        <>
-          <div className="call-view">
-            <div className="card-interviewer">
-                <div className="avatar">
-                    <Image 
-                      src = "/ai-avatar.png"
-                      alt = "vapi"
-                      width = {65}
-                      height={54}
-                      className="object-cover"
-                    />
-                    {isSpeaking && <span className="animate-speak"></span>}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900 p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-2xl">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* AI Interviewer Card */}
+                <div className="flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
+                    <div className="relative mb-4">
+                        <Image 
+                          src = "/ai-avatar.png"
+                          alt = "AI Interviewer"
+                          width = {80}
+                          height={80}
+                          className="object-cover rounded-full shadow-lg"
+                        />
+                        {isSpeaking && (
+                          <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full animate-pulse opacity-75"></div>
+                        )}
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Interviewer</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-2">
+                      Ready to conduct your interview
+                    </p>
                 </div>
-                <h3>AI Interviewer</h3>
-            </div>
 
-            <div className="card-border">
-                <div className="card-content">
+                {/* User Card */}
+                <div className="flex flex-col items-center p-6 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
                     <Image 
                       src="/user-avatar.png"
                       alt="user"
-                      width={540}
-                      height={540}
-                      className="object-cover rounded-full size-[120px]"
+                      width={80}
+                      height={80}
+                      className="object-cover rounded-full shadow-lg mb-4"
                     />
-                    <h3>{userName}</h3>
-                </div>
-            </div>
-          </div>
-          {messages.length > 0 && (
-            <div className="transcript-border">
-                <div className = "transcript">
-                    <p 
-                        key={lastMessage} 
-                        className={cn('transition-opacity duration-500 opacity-100','animate-fadeIn opacity-100' )}
-                        > 
-                        {lastMessage}
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{userName}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-2">
+                      Candidate
                     </p>
                 </div>
-            </div>
-          )}
+              </div>
 
-          <div className="w-full flex justify-center">
-            {callStatus !== 'ACTIVE' ?(
-                <button className="relative btn-call" onClick={handleCall}>
-                    <span className={cn('absolute animate-ping rounded-full opacity-75', callStatus!=='CONNECTING' && 'hidden')} />
-                    <span>
-                        {callStatus === 'INACTIVE' || callStatus === 'FINISHED' ? 'Start Interview':'End Interview'}
-                    </span>
-                </button>
-            ):(
-                <button 
-                className="btn-disconnect"
-                onClick = {handleEndCall}
-                >
-                    End Interview
-                </button>
-            )}
+              {/* Transcript Section */}
+              {messages.length > 0 && (
+                <div className="mb-8">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-600/50">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          Live Transcript
+                        </h4>
+                        <p 
+                            key={lastMessage} 
+                            className="text-gray-800 dark:text-gray-200 leading-relaxed animate-fadeIn"
+                            > 
+                            {lastMessage}
+                        </p>
+                    </div>
+                </div>
+              )}
+
+              {/* Control Buttons */}
+              <div className="flex justify-center">
+                {callStatus !== 'ACTIVE' ?(
+                    <button 
+                      className={`relative px-8 py-4 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ${
+                        callStatus === 'CONNECTING' 
+                          ? 'bg-gradient-to-r from-yellow-500 to-orange-600' 
+                          : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700'
+                      }`}
+                      onClick={handleCall}
+                      disabled={callStatus === 'CONNECTING'}
+                    >
+                        {callStatus === 'CONNECTING' && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl animate-pulse"></div>
+                        )}
+                        <span className="relative flex items-center space-x-2">
+                          {callStatus === 'CONNECTING' ? (
+                            <>
+                              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span>Connecting...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span>{callStatus === 'INACTIVE' || callStatus === 'FINISHED' ? 'Start Interview':'End Interview'}</span>
+                            </>
+                          )}
+                        </span>
+                    </button>
+                ):(
+                    <button 
+                    className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    onClick = {handleEndCall}
+                    >
+                        <span className="flex items-center space-x-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span>End Interview</span>
+                        </span>
+                    </button>
+                )}
+              </div>
+            </div>
           </div>
-        </>
+        </div>
     )
 }
 
