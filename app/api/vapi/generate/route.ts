@@ -2,7 +2,7 @@ import {generateText} from "ai";
 import {google} from "@ai-sdk/google";
 
 import {db} from "@/firebase/admin"
-import { getRandomInterviewCover } from "@/lib/utils";
+import { getInterviewCover } from "@/lib/utils";
 
 export async function GET(){
     return Response.json({success:true,data:"AI Interviewer API"},{status:200})
@@ -34,7 +34,7 @@ export async function POST(request:Request){
             questions:JSON.parse(questions),
             userId:userid,
             finalized:true,
-            coverImage : getRandomInterviewCover(),
+            coverImage : getInterviewCover(),
             createdAt : new Date().toISOString()
         }
 

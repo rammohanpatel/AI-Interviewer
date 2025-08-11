@@ -1,4 +1,4 @@
-import { interviewCovers, mappings } from "@/constants";
+import { mappings } from "@/constants";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -6,9 +6,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const getRandomInterviewCover = ()=>{
-  const randomIndex = Math.floor(Math.random()*interviewCovers.length);
-  return `/covers${interviewCovers[randomIndex]}`
+export const getInterviewCover = ()=>{
+  return "/user-avatar.png"
 }
 
 const techIconBaseURL = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons";

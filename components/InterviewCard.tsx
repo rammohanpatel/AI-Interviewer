@@ -1,7 +1,6 @@
 import React from 'react'
 import dayjs from 'dayjs';
-import Image from 'next/image';
-import { getRandomInterviewCover } from '@/lib/utils';
+import InterviewIcon from './InterviewIcon';
 import DisplayTechIcons   from './DisplayTechIcons';
 import { Button } from './ui/button';
 import Link from 'next/link';
@@ -18,13 +17,7 @@ const InterviewCard = async({id, userId, role, type, techstack,createdAt}:Interv
       {/* Header with type badge */}
       <div className='flex justify-between items-start mb-4'>
         <div className='flex items-center space-x-3'>
-          <Image 
-             src={getRandomInterviewCover()}
-             alt="cover-image"
-             width={60}
-             height={60}
-             className='rounded-xl object-cover shadow-md'
-          />
+          <InterviewIcon type={type} size="md" />
           <div>
             <h3 className='text-lg font-bold text-gray-900 dark:text-white capitalize group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
               {role}

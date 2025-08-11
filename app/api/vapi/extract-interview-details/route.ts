@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import { db } from "@/firebase/admin";
-import { getRandomInterviewCover } from "@/lib/utils";
+import { getInterviewCover } from "@/lib/utils";
 
 const InterviewDetailsSchema = z.object({
   role: z.string(),
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       questions: [], // Will be populated when generating questions
       userId: userId,
       finalized: false, // Not finalized until questions are generated
-      coverImage: getRandomInterviewCover(),
+      coverImage: getInterviewCover(),
       createdAt: new Date().toISOString()
     };
 

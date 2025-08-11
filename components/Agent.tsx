@@ -190,7 +190,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
                 <div className="flex flex-col items-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
                     <div className="relative mb-4">
                         <Image 
-                          src = "/ai-avatar.png"
+                          src = "/interviewer.png"
                           alt = "AI Interviewer"
                           width = {80}
                           height={80}
@@ -209,7 +209,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
                 {/* User Card */}
                 <div className="flex flex-col items-center p-6 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
                     <Image 
-                      src="/user-avatar.png"
+                      src="/candidate.png"
                       alt="user"
                       width={80}
                       height={80}

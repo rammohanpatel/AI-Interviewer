@@ -1,8 +1,7 @@
 import { getInterviewById } from "@/lib/actions/general.action";
 import {redirect} from "next/navigation";
-import Image from "next/image";
+import InterviewIcon from "@/components/InterviewIcon";
 import Agent from "@/components/Agent";
-import { getRandomInterviewCover } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import DisplayTechIcons from "@/components/DisplayTechIcons";
 import Link from "next/link";
@@ -23,13 +22,7 @@ export default async function Page({params}:RouteParams){
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center space-x-4">
-                  <Image
-                    src={getRandomInterviewCover()}
-                    alt="cover-image"
-                    width={60}
-                    height={60}
-                    className="object-cover rounded-xl shadow-md" 
-                  />
+                  <InterviewIcon type={interview.type} level={interview.level} size="md" />
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
                       {interview.role} Interview
