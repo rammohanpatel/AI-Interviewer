@@ -9,7 +9,7 @@ import Link from "next/link";
 
 
 export default async function Page({params}:RouteParams){
-    const { id } = params;
+    const { id } = await params;
     const user = await getCurrentUser();
 
     const interview = await getInterviewById(id);

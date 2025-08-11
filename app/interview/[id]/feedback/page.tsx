@@ -12,8 +12,10 @@ import Link from "next/link"
 
 
 const FeedbackPage = async ({ params }: RouteParams) => {
-  const { id } = params
+  const { id } = await params
   const user = await getCurrentUser()
+  
+  if (!user) return redirect("/sign-in")
 
   const interview = await getInterviewById(id)
   if (!interview) return redirect("/")

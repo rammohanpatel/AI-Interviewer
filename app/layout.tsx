@@ -26,6 +26,7 @@ export default async function RootLayout({
     <html lang="en" className="dark">
       <body
         className={`${geistSans.className} antialiased pattern`}
+        suppressHydrationWarning={true}
       >
         {children}
         <Analytics />

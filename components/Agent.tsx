@@ -93,6 +93,43 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
         }
     }
 
+    const handleGenerateInterview = async(messages:SavedMessages[])=>{
+        console.log("generate interview here");
+        
+        try {
+            // Extract interview details from the conversation
+            const conversationText = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+            
+            // Use AI to extract structured data from the conversation
+            const response = await fetch('/api/vapi/extract-interview-details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation: conversationText,
+                    userId: userId
+                })
+            });
+            
+            if (response.ok) {
+                const { success, interviewId } = await response.json();
+                if (success && interviewId) {
+                    router.push(`/interview/${interviewId}`);
+                } else {
+                    console.log("Failed to create interview");
+                    router.push('/');
+                }
+            } else {
+                console.log("Failed to extract interview details");
+                router.push('/');
+            }
+        } catch (error) {
+            console.error("Error creating interview:", error);
+            router.push('/');
+        }
+    }
+
     useEffect(()=>{
         if(messages.length > 0){
             setLastMessage(messages[messages.length - 1].content);
@@ -100,7 +137,7 @@ const Agent = ({userName,userId,type,interviewId,questions}:AgentProps)=>{
 
         if(callStatus === CallStatus.FINISHED){
             if(type=="generate"){
-                router.push("/");
+                handleGenerateInterview(messages);
             }
             else{
                 handleGenerateFeedback(messages);
