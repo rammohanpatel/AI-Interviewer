@@ -9,6 +9,7 @@ import ProblemStatement from '@/components/ProblemStatement';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { toast } from 'sonner';
 
 const CodingInterviewPage = () => {
   const params = useParams();
@@ -21,6 +22,7 @@ const CodingInterviewPage = () => {
   const [question, setQuestion] = useState<Question | null>(null);
   const [interview, setInterview] = useState<CodingInterview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
 
   useEffect(() => {
     const fetchInterview = async () => {
@@ -65,6 +67,9 @@ const CodingInterviewPage = () => {
   const handleCompleteInterview = async (transcript: any[]) => {
     if (!interviewId || !user?.id) return;
     
+    setIsGeneratingFeedback(true);
+    toast.loading('Saving interview and generating feedback...', { id: 'feedback-generation' });
+    
     try {
       console.log('Completing interview with transcript:', transcript);
       const response = await fetch(`/api/coding/interviews/${interviewId}/transcript`, {
@@ -77,18 +82,29 @@ const CodingInterviewPage = () => {
         }),
       });
       
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
+      
       const data = await response.json();
       console.log('Transcript save response:', data);
       
       if (response.ok) {
+        toast.success('Feedback generated successfully!', { id: 'feedback-generation' });
+        // Redirect to feedback page - feedback should be ready
         router.push(`/coding/${company}/${interviewId}/feedback`);
       } else {
+        toast.error(`Failed: ${data.error || 'Unknown error'}`, { id: 'feedback-generation' });
         console.error('Failed to save transcript:', data);
-        alert('Failed to save interview. Please try again.');
+        setIsGeneratingFeedback(false);
       }
     } catch (error) {
       console.error('Error completing interview:', error);
-      alert('Error completing interview. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Error: ${errorMessage}`, { id: 'feedback-generation' });
+      setIsGeneratingFeedback(false);
     }
   };
 
@@ -132,6 +148,21 @@ const CodingInterviewPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Loading Overlay for Feedback Generation */}
+      {isGeneratingFeedback && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card border border-border rounded-lg p-8 max-w-md text-center shadow-lg">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Generating Your Feedback
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Our AI is analyzing your interview performance and code solution. This may take 30-60 seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
@@ -163,20 +194,25 @@ const CodingInterviewPage = () => {
       <main className="container mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
           {/* Left Panel - Problem Statement (Full Width on Mobile) */}
-          <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto">
-            <ProblemStatement question={question} />
+          <div className="lg:col-span-1 flex flex-col gap-4 h-full">
+            {/* Problem Statement - Fixed height with scroll */}
+            <div className="flex-shrink-0 max-h-[45%] overflow-y-auto">
+              <ProblemStatement question={question} />
+            </div>
             
-            {/* Video & Controls - Compact */}
-            <div className="space-y-3">
-              <div className="w-full max-w-sm mx-auto lg:max-w-full">
+            {/* Video & Controls - Remaining space */}
+            <div className="flex-1 flex-col gap-3 overflow-y-auto">
+              <div className="w-full max-w-sm mx-auto lg:max-w-full flex-shrink-0">
                 <VideoFeed />
+              <div className="flex-shrink-0 mt-1">
+                <VapiControls 
+                  currentCode={currentCode} 
+                  question={question} 
+                  userName={user?.name || 'User'}
+                  onInterviewComplete={handleCompleteInterview}
+                />
               </div>
-              <VapiControls 
-                currentCode={currentCode} 
-                question={question} 
-                userName={user?.name || 'User'}
-                onInterviewComplete={handleCompleteInterview}
-              />
+              </div>
             </div>
           </div>
 

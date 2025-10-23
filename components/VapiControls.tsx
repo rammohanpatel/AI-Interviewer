@@ -21,11 +21,13 @@ interface VapiControlsProps {
 const VapiControls = ({ currentCode = '', question = '', userName = 'there', onInterviewComplete }: VapiControlsProps) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [transcript, setTranscript] = useState<Array<{role: string, content: string, timestamp: string}>>([]);
   const [currentMessage, setCurrentMessage] = useState<{role: string, content: string} | null>(null);
   const [lastCompleteMessage, setLastCompleteMessage] = useState<string>('');
   const [messageTimeout, setMessageTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
 
   // Create refs to avoid stale closures
   const transcriptRef = useRef(transcript);
@@ -62,6 +64,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
     vapiInstance.on('call-start', () => {
       console.log('Call started');
       setIsConnected(true);
+      setIsStarting(false);
       toast.success('Interview started');
       setTranscript([]); // Clear previous transcript
       setCurrentMessage(null);
@@ -215,6 +218,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
   const startInterview = async () => {
     if (!vapi) return;
     
+    setIsStarting(true);
     try {
       const questionText = typeof question === 'string' ? question : question?.title || '';
       await vapi.start(VAPI_WORKFLOW_ID, {
@@ -226,6 +230,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
     } catch (error) {
       console.error('Failed to start interview:', error);
       toast.error('Failed to start interview');
+      setIsStarting(false);
     }
   };
 
@@ -276,10 +281,19 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
             <Button 
               onClick={startInterview}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={!question}
+              disabled={!question || isStarting}
             >
-              <Phone className="w-4 h-4 mr-2" />
-              {question ? 'Start Interview' : 'Loading Question...'}
+              {isStarting ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <Phone className="w-4 h-4 mr-2" />
+                  {question ? 'Start Interview' : 'Loading Question...'}
+                </>
+              )}
             </Button>
           ) : (
             <>
@@ -364,39 +378,56 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       </Card>
 
       {(transcript.length > 0 || currentMessage) && (
-        <Card className="p-4 bg-card border-border max-h-[200px] overflow-y-auto">
-          <h4 className="text-xs font-semibold text-muted-foreground mb-2">Interview Transcript</h4>
-          <div className="space-y-3">
-            {/* Completed messages */}
-            {transcript.map((entry, index) => (
-              <div key={index} className="text-sm border-l-2 border-muted pl-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-primary text-xs">
-                    {entry.role === 'user' ? 'You' : 'AI Interviewer'}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(entry.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <p className="text-foreground">{entry.content}</p>
-              </div>
-            ))}
-            
-            {/* Current message being spoken */}
-            {currentMessage && (
-              <div className="text-sm border-l-2 border-primary pl-3 bg-primary/5 rounded-r-lg p-2">
-                <div className="flex items-center mb-1">
-                  <span className="font-medium text-primary text-xs">
-                    {currentMessage.role === 'user' ? 'You' : 'AI Interviewer'}
-                  </span>
-                  <span className="ml-2 text-xs text-primary animate-pulse">
-                    speaking...
-                  </span>
-                </div>
-                <p className="text-foreground">{currentMessage.content}</p>
-              </div>
-            )}
+        <Card className="p-4 bg-card border-border">
+          <div 
+            className="flex items-center justify-between cursor-pointer mb-2"
+            onClick={() => setShowTranscript(!showTranscript)}
+          >
+            <h4 className="text-xs font-semibold text-muted-foreground">
+              Interview Transcript ({transcript.length + (currentMessage ? 1 : 0)} messages)
+            </h4>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="h-6 w-6 p-0"
+            >
+              {showTranscript ? '−' : '+'}
+            </Button>
           </div>
+          
+          {showTranscript && (
+            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              {/* Completed messages */}
+              {transcript.map((entry, index) => (
+                <div key={index} className="text-sm border-l-2 border-muted pl-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-primary text-xs">
+                      {entry.role === 'user' ? 'You' : 'AI Interviewer'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(entry.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <p className="text-foreground">{entry.content}</p>
+                </div>
+              ))}
+              
+              {/* Current message being spoken */}
+              {currentMessage && (
+                <div className="text-sm border-l-2 border-primary pl-3 bg-primary/5 rounded-r-lg p-2">
+                  <div className="flex items-center mb-1">
+                    <span className="font-medium text-primary text-xs">
+                      {currentMessage.role === 'user' ? 'You' : 'AI Interviewer'}
+                    </span>
+                    <span className="ml-2 text-xs text-primary animate-pulse">
+                      speaking...
+                    </span>
+                  </div>
+                  <p className="text-foreground">{currentMessage.content}</p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
     </div>
