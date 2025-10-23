@@ -11,15 +11,7 @@ interface CodeEditorProps {
 
 const CodeEditor = ({ onCodeChange }: CodeEditorProps) => {
   const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState(`// Solve the Two Sum problem
-function twoSum(nums, target) {
-  // Write your solution here
-  
-}
-
-// Test your function
-console.log(twoSum([2, 7, 11, 15], 9)); // Expected: [0, 1]
-`);
+  const [code, setCode] = useState('// Start coding here...\n');
 
   const handleCodeChange = (value: string | undefined) => {
     const newCode = value || '';

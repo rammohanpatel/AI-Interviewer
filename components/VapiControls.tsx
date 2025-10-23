@@ -1,3 +1,4 @@
+import { VapiMessage } from '@/types/vapi';
 import { useState, useEffect } from 'react';
 import Vapi from '@vapi-ai/web';
 import { Button } from '@/components/ui/button';
@@ -10,9 +11,13 @@ const VAPI_WORKFLOW_ID = '16f36366-98ec-48f7-8e70-90549aae29b3';
 
 interface VapiControlsProps {
   currentCode?: string;
+  question?: string;
+  userName?: string;
 }
 
-const VapiControls = ({ currentCode = '' }: VapiControlsProps) => {
+
+
+const VapiControls = ({ currentCode = '', question = '', userName = 'there' }: VapiControlsProps) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -34,14 +39,14 @@ const VapiControls = ({ currentCode = '' }: VapiControlsProps) => {
       toast.info('Interview ended');
     });
 
-    vapiInstance.on('message', (message: any) => {
+    vapiInstance.on('message', (message: VapiMessage) => {
       console.log('Message:', message);
       if (message.type === 'transcript' && message.transcript) {
         setTranscript(prev => [...prev, `${message.role}: ${message.transcript}`]);
       }
     });
 
-    vapiInstance.on('error', (error: any) => {
+    vapiInstance.on('error', (error: Error) => {
       console.error('Vapi error:', error);
       toast.error('Interview error occurred');
     });
@@ -55,7 +60,11 @@ const VapiControls = ({ currentCode = '' }: VapiControlsProps) => {
     if (!vapi) return;
     
     try {
-      await vapi.start(VAPI_WORKFLOW_ID);
+      await vapi.start(VAPI_WORKFLOW_ID, {
+        variableValues: {
+          questions: question,
+        }
+      });
     } catch (error) {
       console.error('Failed to start interview:', error);
       toast.error('Failed to start interview');
@@ -83,7 +92,7 @@ const VapiControls = ({ currentCode = '' }: VapiControlsProps) => {
       type: 'add-message',
       message: {
         role: 'user',
-        content: `Here's my current code for the Two Sum problem:\n\n${currentCode}\n\nCan you analyze it and give me feedback on my approach, any bugs, and hints if needed?`
+        content: `Here's my current code for the problem:\n\n${currentCode}\n\nCan you analyze it and give me feedback on my approach, any bugs, and hints if needed?`
       }
     });
     toast.success('Code sent for review');
@@ -109,9 +118,10 @@ const VapiControls = ({ currentCode = '' }: VapiControlsProps) => {
             <Button 
               onClick={startInterview}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              disabled={!question}
             >
               <Phone className="w-4 h-4 mr-2" />
-              Start Interview
+              {question ? 'Start Interview' : 'Loading Question...'}
             </Button>
           ) : (
             <>

@@ -44,7 +44,16 @@ interface FunctionCallResultMessage extends BaseMessage {
   };
 }
 
+interface VapiMessage extends BaseMessage {
+  type: MessageTypeEnum.ADD_MESSAGE;
+  message: {
+    role: MessageRoleEnum;
+    content: string;
+  };
+}
+
 type Message =
   | TranscriptMessage
   | FunctionCallMessage
-  | FunctionCallResultMessage;
+  | FunctionCallResultMessage
+  | VapiMessage;

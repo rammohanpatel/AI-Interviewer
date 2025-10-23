@@ -97,3 +97,10 @@ interface InterviewFormProps {
 interface TechIconProps {
   techStack: string[];
 }
+
+// Extend Window interface for audio context
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
