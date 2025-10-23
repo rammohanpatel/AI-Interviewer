@@ -8,12 +8,14 @@ import VapiControls from '@/components/VapiControls';
 import ProblemStatement from '@/components/ProblemStatement';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const CodingInterviewPage = () => {
   const params = useParams();
   const router = useRouter();
   const company = params.company as string;
   const interviewId = params.interviewId as string;
+  const { user, loading: userLoading } = useCurrentUser();
   
   const [currentCode, setCurrentCode] = useState('');
   const [question, setQuestion] = useState<Question | null>(null);
@@ -61,31 +63,54 @@ const CodingInterviewPage = () => {
   };
 
   const handleCompleteInterview = async (transcript: any[]) => {
-    if (!interviewId) return;
+    if (!interviewId || !user?.id) return;
     
     try {
+      console.log('Completing interview with transcript:', transcript);
       const response = await fetch(`/api/coding/interviews/${interviewId}/transcript`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript, code: currentCode }),
+        body: JSON.stringify({ 
+          transcript, 
+          code: currentCode,
+          userId: user.id
+        }),
       });
       
       const data = await response.json();
+      console.log('Transcript save response:', data);
       
       if (response.ok) {
         router.push(`/coding/${company}/${interviewId}/feedback`);
+      } else {
+        console.error('Failed to save transcript:', data);
+        alert('Failed to save interview. Please try again.');
       }
     } catch (error) {
       console.error('Error completing interview:', error);
+      alert('Error completing interview. Please try again.');
     }
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading interview...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">Please sign in to access the interview</p>
+          <Button onClick={() => router.push('/sign-in')}>
+            Sign In
+          </Button>
         </div>
       </div>
     );
@@ -144,7 +169,7 @@ const CodingInterviewPage = () => {
             <VapiControls 
               currentCode={currentCode} 
               question={question} 
-              userName="Rammohan"
+              userName={user?.name || 'User'}
               onInterviewComplete={handleCompleteInterview}
             />
           </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase/admin';
+import { createCodingFeedback } from '@/lib/actions/general.action';
 
 export async function POST(
   request: Request,
@@ -7,11 +8,23 @@ export async function POST(
 ) {
   try {
     const { interviewId } = await params;
-    const { transcript, code } = await request.json();
+    const { transcript, code, userId } = await request.json();
 
-    if (!transcript) {
-      return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
+    if (!transcript || !userId) {
+      return NextResponse.json({ error: 'Transcript and userId are required' }, { status: 400 });
     }
+
+    console.log('Saving transcript for interview:', interviewId);
+    console.log('Transcript data:', transcript);
+
+    // Get the interview to get the question and user details
+    const interviewDoc = await db.collection('coding-interviews').doc(interviewId).get();
+    
+    if (!interviewDoc.exists) {
+      return NextResponse.json({ error: 'Interview not found' }, { status: 404 });
+    }
+
+    const interviewData = interviewDoc.data() as CodingInterview;
 
     // Update the interview with transcript and code
     await db.collection('coding-interviews').doc(interviewId).update({
@@ -20,46 +33,37 @@ export async function POST(
       completedAt: new Date().toISOString(),
     });
 
-    // Generate feedback using AI (you can integrate with OpenAI or other AI services)
-    const feedback = await generateFeedback(transcript, code);
+    console.log('Updated interview with transcript and code');
 
-    // Save feedback
-    await db.collection('coding-interviews').doc(interviewId).update({
-      feedback,
+    // Generate feedback using Gemini AI
+    const feedbackResult = await createCodingFeedback({
+      interviewId,
+      userId,
+      transcript,
+      code: code || '',
+      question: interviewData.question,
     });
 
-    return NextResponse.json({ feedback });
+    console.log('Feedback generation result:', feedbackResult);
+
+    if (!feedbackResult.success) {
+      console.error('Failed to generate feedback:', feedbackResult.error);
+      return NextResponse.json({ 
+        error: 'Failed to generate feedback', 
+        details: feedbackResult.error 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      feedbackId: feedbackResult.feedbackId,
+      message: feedbackResult.message 
+    });
   } catch (error) {
     console.error('Error saving transcript:', error);
-    return NextResponse.json({ error: 'Failed to save transcript' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to save transcript', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
-}
-
-async function generateFeedback(transcript: any[], code: string): Promise<string> {
-  // This is a simple placeholder. You can integrate with OpenAI API here
-  // to generate more sophisticated feedback based on the transcript and code
-  
-  const transcriptText = transcript
-    .map(entry => `${entry.role}: ${entry.content}`)
-    .join('\n');
-
-  // Simple feedback generation (replace with actual AI integration)
-  const codeQuality = code.length > 50 ? 'Good' : 'Needs improvement';
-  const communicationQuality = transcript.length > 5 ? 'Good' : 'Could be better';
-
-  return `
-Feedback Summary:
-- Code Quality: ${codeQuality}
-- Communication: ${communicationQuality}
-- Total Responses: ${transcript.filter(t => t.role === 'user').length}
-
-Areas for Improvement:
-- Practice explaining your thought process more clearly
-- Consider edge cases in your solution
-- Optimize for time and space complexity
-
-Strengths:
-- Showed understanding of the problem
-- Attempted to solve the coding challenge
-`;
 }

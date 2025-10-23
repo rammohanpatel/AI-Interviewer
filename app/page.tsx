@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import InterviewCard from '@/components/InterviewCard'
+import CodingInterviewCard from '@/components/CodingInterviewCard'
 import { redirect } from 'next/navigation'
 import { getCurrentUser, isAuthenticated } from '@/lib/actions/auth.action'
-import { getCompletedInterviews} from "@/lib/actions/general.action";
+import { getCompletedInterviews, getCompletedCodingInterviews } from "@/lib/actions/general.action";
 import Logo from '@/components/Logo'
 import Link from 'next/link'
 
@@ -15,10 +16,12 @@ const Home = async() => {
   const user = await getCurrentUser();
 
   const { interviewsWithFeedback, interviewsWithoutFeedback } = await getCompletedInterviews({userId:user?.id!});
+  
+  // Also get coding interviews
+  const { interviewsWithFeedback: codingWithFeedback, interviewsWithoutFeedback: codingWithoutFeedback } = await getCompletedCodingInterviews({userId: user?.id!});
 
-
-  const hasInterviewsWithFeedback = interviewsWithFeedback?.length! > 0;
-  const hasInterviewsWithoutFeedback = interviewsWithoutFeedback?.length! > 0;
+  const hasInterviewsWithFeedback = interviewsWithFeedback?.length! > 0 || codingWithFeedback?.length! > 0;
+  const hasInterviewsWithoutFeedback = interviewsWithoutFeedback?.length! > 0 || codingWithoutFeedback?.length! > 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
@@ -53,6 +56,52 @@ const Home = async() => {
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
             Practice with AI-powered interviews tailored to your role and get instant, actionable feedback
           </p>
+
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                <svg className="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Interview Practice Options
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m13 0h-6m-2-5h6m2 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Coding Interviews</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Practice with company-specific coding challenges</p>
+                  </div>
+                </div>
+                <Button asChild className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
+                  <Link href="/coding">Start Coding Interview</Link>
+                </Button>
+              </div>
+              
+              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Behavioral Interviews</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Practice behavioral and situational questions</p>
+                  </div>
+                </div>
+                <Button asChild className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white">
+                  <Link href="/interview">Start Behavioral Interview</Link>
+                </Button>
+              </div>
+            </div>
+          </section>
           
           {!hasInterviewsWithoutFeedback && !hasInterviewsWithFeedback && (
             <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-8 max-w-md mx-auto border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
@@ -84,7 +133,7 @@ const Home = async() => {
         </div>
 
         {/* Recent Interviews Section */}
-        {hasInterviewsWithoutFeedback && (
+        {(hasInterviewsWithoutFeedback || codingWithoutFeedback?.length! > 0) && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
@@ -93,20 +142,31 @@ const Home = async() => {
                 </svg>
                 Continue Your Practice
               </h2>
-              <Button asChild variant="outline" className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <Link href="/interview">Create New</Link>
-              </Button>
+              <div className="flex space-x-2">
+                <Button asChild variant="outline" className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <Link href="/coding">New Coding Interview</Link>
+                </Button>
+                <Button asChild variant="outline" className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <Link href="/interview">New Behavioral Interview</Link>
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Behavioral interviews without feedback */}
               {interviewsWithoutFeedback?.map((interview) => (
                 <InterviewCard key={interview.id} {...interview} />
+              ))}
+              
+              {/* Coding interviews without feedback */}
+              {codingWithoutFeedback?.map((interview) => (
+                <CodingInterviewCard key={interview.id} interview={interview} hasFeedback={false} />
               ))}
             </div>
           </section>
         )}
 
         {/* Completed Interviews Section */}
-        {hasInterviewsWithFeedback && (
+        {(hasInterviewsWithFeedback || codingWithFeedback?.length! > 0) && (
           <section>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
@@ -116,12 +176,18 @@ const Home = async() => {
                 Completed Interviews
               </h2>
               <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                {interviewsWithFeedback.length} completed
+                {(interviewsWithFeedback?.length || 0) + (codingWithFeedback?.length || 0)} completed
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Behavioral interviews with feedback */}
               {interviewsWithFeedback?.map((interview) => (
                 <InterviewCard key={interview.id} {...interview} />
+              ))}
+              
+              {/* Coding interviews with feedback */}
+              {codingWithFeedback?.map((interview) => (
+                <CodingInterviewCard key={interview.id} interview={interview} hasFeedback={true} />
               ))}
             </div>
           </section>

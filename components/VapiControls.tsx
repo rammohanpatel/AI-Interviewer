@@ -1,5 +1,5 @@
 import { VapiMessage } from '@/types/vapi';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Vapi from '@vapi-ai/web';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,7 +22,38 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [transcript, setTranscript] = useState<string[]>([]);
+  const [transcript, setTranscript] = useState<Array<{role: string, content: string, timestamp: string}>>([]);
+  const [currentMessage, setCurrentMessage] = useState<{role: string, content: string} | null>(null);
+  const [lastCompleteMessage, setLastCompleteMessage] = useState<string>('');
+  const [messageTimeout, setMessageTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Create refs to avoid stale closures
+  const transcriptRef = useRef(transcript);
+  const currentMessageRef = useRef(currentMessage);
+  const lastCompleteMessageRef = useRef(lastCompleteMessage);
+  const messageTimeoutRef = useRef(messageTimeout);
+  const onInterviewCompleteRef = useRef(onInterviewComplete);
+
+  // Update refs when state changes
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
+  useEffect(() => {
+    currentMessageRef.current = currentMessage;
+  }, [currentMessage]);
+
+  useEffect(() => {
+    lastCompleteMessageRef.current = lastCompleteMessage;
+  }, [lastCompleteMessage]);
+
+  useEffect(() => {
+    messageTimeoutRef.current = messageTimeout;
+  }, [messageTimeout]);
+
+  useEffect(() => {
+    onInterviewCompleteRef.current = onInterviewComplete;
+  }, [onInterviewComplete]);
 
   useEffect(() => {
     const vapiInstance = new Vapi(VAPI_WEB_TOKEN);
@@ -32,6 +63,9 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       console.log('Call started');
       setIsConnected(true);
       toast.success('Interview started');
+      setTranscript([]); // Clear previous transcript
+      setCurrentMessage(null);
+      setLastCompleteMessage('');
     });
 
     vapiInstance.on('call-end', () => {
@@ -39,21 +73,129 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       setIsConnected(false);
       toast.info('Interview ended');
       
-      // Call the completion callback with transcript
-      if (onInterviewComplete && transcript.length > 0) {
-        const formattedTranscript = transcript.map((line, index) => ({
-          role: line.startsWith('user:') ? 'user' : 'assistant',
-          content: line.replace(/^(user:|assistant:)\s*/, ''),
+      // Clear any timeouts
+      if (messageTimeout) {
+        clearTimeout(messageTimeout);
+      }
+      
+      // Add any remaining current message to transcript if it's new
+      const currentMsg = currentMessageRef.current;
+      const lastComplete = lastCompleteMessageRef.current;
+      const currentTranscript = transcriptRef.current;
+      
+      if (currentMsg && currentMsg.content !== lastComplete) {
+        const finalEntry = {
+          ...currentMsg,
           timestamp: new Date().toISOString()
-        }));
-        onInterviewComplete(formattedTranscript);
+        };
+        const finalTranscript = [...currentTranscript, finalEntry];
+        setTranscript(finalTranscript);
+        
+        // Call the completion callback with final transcript
+        const completeCallback = onInterviewCompleteRef.current;
+        if (completeCallback && finalTranscript.length > 0) {
+          console.log('Sending final transcript to completion handler:', finalTranscript);
+          setTimeout(() => completeCallback(finalTranscript), 500);
+        }
+      } else {
+        const completeCallback = onInterviewCompleteRef.current;
+        if (completeCallback && currentTranscript.length > 0) {
+          console.log('Sending transcript to completion handler:', currentTranscript);
+          setTimeout(() => completeCallback(currentTranscript), 500);
+        }
       }
     });
 
     vapiInstance.on('message', (message: VapiMessage) => {
-      console.log('Message:', message);
+      console.log('Vapi Message received:', message);
+      
       if (message.type === 'transcript' && message.transcript) {
-        setTranscript(prev => [...prev, `${message.role}: ${message.transcript}`]);
+        const messageRole = message.role || 'assistant';
+        const messageContent = message.transcript.trim();
+        
+        // Clear any existing timeout
+        const currentTimeout = messageTimeoutRef.current;
+        if (currentTimeout) {
+          clearTimeout(currentTimeout);
+        }
+
+        // Only process if this is a new/different message content
+        const lastComplete = lastCompleteMessageRef.current;
+        const currentMsg = currentMessageRef.current;
+        
+        if (messageContent && messageContent !== lastComplete) {
+          // Check if this is a continuation of the current message or a new one
+          if (currentMsg && currentMsg.role === messageRole) {
+            // Update the current message with the latest content
+            setCurrentMessage({
+              role: messageRole,
+              content: messageContent
+            });
+          } else {
+            // New speaker - save previous message if it exists and is different
+            if (currentMsg && currentMsg.content !== lastComplete) {
+              const completedEntry = {
+                ...currentMsg,
+                timestamp: new Date().toISOString()
+              };
+              setTranscript(prev => [...prev, completedEntry]);
+              setLastCompleteMessage(currentMsg.content);
+            }
+            
+            setCurrentMessage({
+              role: messageRole,
+              content: messageContent
+            });
+          }
+
+          // Set timeout to finalize message if no updates come within 2 seconds
+          const timeout = setTimeout(() => {
+            const current = currentMessageRef.current;
+            const lastCompleteNow = lastCompleteMessageRef.current;
+            
+            if (current && current.content !== lastCompleteNow) {
+              const completedEntry = {
+                ...current,
+                timestamp: new Date().toISOString()
+              };
+              setTranscript(prev => [...prev, completedEntry]);
+              setLastCompleteMessage(current.content);
+              setCurrentMessage(null);
+            }
+          }, 2000); // 2 seconds timeout
+
+          setMessageTimeout(timeout);
+        }
+      }
+      
+      // Handle speech start/end events
+      if (message.type === 'speech-start') {
+        console.log('Speech started by:', message.role);
+      }
+      
+      if (message.type === 'speech-end') {
+        console.log('Speech ended by:', message.role);
+        
+        // Clear timeout since we got speech-end
+        const currentTimeout = messageTimeoutRef.current;
+        if (currentTimeout) {
+          clearTimeout(currentTimeout);
+          setMessageTimeout(null);
+        }
+        
+        // When speech ends, finalize the current message if it's new
+        const currentMsg = currentMessageRef.current;
+        const lastComplete = lastCompleteMessageRef.current;
+        
+        if (currentMsg && currentMsg.content !== lastComplete) {
+          const completedEntry = {
+            ...currentMsg,
+            timestamp: new Date().toISOString()
+          };
+          setTranscript(prev => [...prev, completedEntry]);
+          setLastCompleteMessage(currentMsg.content);
+          setCurrentMessage(null);
+        }
       }
     });
 
@@ -64,8 +206,11 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
 
     return () => {
       vapiInstance.stop();
+      if (messageTimeout) {
+        clearTimeout(messageTimeout);
+      }
     };
-  }, []);
+  }, []); // Empty dependencies - we use refs for all state access
 
   const startInterview = async () => {
     if (!vapi) return;
@@ -75,6 +220,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       await vapi.start(VAPI_WORKFLOW_ID, {
         variableValues: {
           questions: questionText,
+          user_name: userName
         }
       });
     } catch (error) {
@@ -156,7 +302,39 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
                   )}
                 </Button>
                 <Button 
-                  onClick={endInterview}
+                  onClick={() => {
+                    // Finalize any current message before ending
+                    if (currentMessage && currentMessage.content !== lastCompleteMessage) {
+                      const finalEntry = {
+                        ...currentMessage,
+                        timestamp: new Date().toISOString()
+                      };
+                      setTranscript(prev => {
+                        const updatedTranscript = [...prev, finalEntry];
+                        setLastCompleteMessage(currentMessage.content);
+                        
+                        // End the interview and trigger completion
+                        endInterview();
+                        
+                        // Trigger completion callback with updated transcript
+                        if (onInterviewComplete && updatedTranscript.length > 0) {
+                          setTimeout(() => {
+                            onInterviewComplete(updatedTranscript);
+                          }, 1000);
+                        }
+                        
+                        return updatedTranscript;
+                      });
+                    } else {
+                      // No current message, just end interview with existing transcript
+                      endInterview();
+                      if (onInterviewComplete && transcript.length > 0) {
+                        setTimeout(() => {
+                          onInterviewComplete(transcript);
+                        }, 1000);
+                      }
+                    }
+                  }}
                   variant="destructive"
                   className="flex-1"
                 >
@@ -171,20 +349,53 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
               >
                 Ask AI to Review My Code
               </Button>
+              
+              {/* Debug info */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/50 rounded">
+                  <div>Transcript entries: {transcript.length}</div>
+                  <div>Current message: {currentMessage ? 'Yes' : 'No'}</div>
+                  <div>Last complete: {lastCompleteMessage.substring(0, 30)}...</div>
+                </div>
+              )}
             </>
           )}
         </div>
       </Card>
 
-      {transcript.length > 0 && (
+      {(transcript.length > 0 || currentMessage) && (
         <Card className="p-4 bg-card border-border max-h-[200px] overflow-y-auto">
-          <h4 className="text-xs font-semibold text-muted-foreground mb-2">Transcript</h4>
-          <div className="space-y-2">
-            {transcript.map((line, index) => (
-              <p key={index} className="text-sm text-foreground">
-                {line}
-              </p>
+          <h4 className="text-xs font-semibold text-muted-foreground mb-2">Interview Transcript</h4>
+          <div className="space-y-3">
+            {/* Completed messages */}
+            {transcript.map((entry, index) => (
+              <div key={index} className="text-sm border-l-2 border-muted pl-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-primary text-xs">
+                    {entry.role === 'user' ? 'You' : 'AI Interviewer'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(entry.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-foreground">{entry.content}</p>
+              </div>
             ))}
+            
+            {/* Current message being spoken */}
+            {currentMessage && (
+              <div className="text-sm border-l-2 border-primary pl-3 bg-primary/5 rounded-r-lg p-2">
+                <div className="flex items-center mb-1">
+                  <span className="font-medium text-primary text-xs">
+                    {currentMessage.role === 'user' ? 'You' : 'AI Interviewer'}
+                  </span>
+                  <span className="ml-2 text-xs text-primary animate-pulse">
+                    speaking...
+                  </span>
+                </div>
+                <p className="text-foreground">{currentMessage.content}</p>
+              </div>
+            )}
           </div>
         </Card>
       )}

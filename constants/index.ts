@@ -189,6 +189,41 @@ export const feedbackSchema = z.object({
   finalAssessment: z.string(),
 });
 
+export const codingFeedbackSchema = z.object({
+  totalScore: z.number(),
+  categoryScores: z.tuple([
+    z.object({
+      name: z.literal("Problem Understanding"),
+      score: z.number(),
+      comment: z.string(),
+    }),
+    z.object({
+      name: z.literal("Algorithm & Logic"),
+      score: z.number(),
+      comment: z.string(),
+    }),
+    z.object({
+      name: z.literal("Code Quality"),
+      score: z.number(),
+      comment: z.string(),
+    }),
+    z.object({
+      name: z.literal("Communication"),
+      score: z.number(),
+      comment: z.string(),
+    }),
+    z.object({
+      name: z.literal("Testing & Edge Cases"),
+      score: z.number(),
+      comment: z.string(),
+    }),
+  ]),
+  strengths: z.array(z.string()),
+  areasForImprovement: z.array(z.string()),
+  finalAssessment: z.string(),
+  codeReview: z.string(),
+});
+
 export const dummyInterviews: Interview[] = [
   {
     id: "1",

@@ -34,14 +34,21 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const company = searchParams.get('company');
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    const snapshot = await db
+    let query = db
       .collection('coding-interviews')
-      .where('userId', '==', userId)
+      .where('userId', '==', userId);
+
+    if (company) {
+      query = query.where('company', '==', company.toLowerCase());
+    }
+
+    const snapshot = await query
       .orderBy('createdAt', 'desc')
       .limit(10)
       .get();
