@@ -22,7 +22,6 @@ const CodingInterviewPage = () => {
   const [question, setQuestion] = useState<Question | null>(null);
   const [interview, setInterview] = useState<CodingInterview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
 
   useEffect(() => {
     const fetchInterview = async () => {
@@ -67,8 +66,7 @@ const CodingInterviewPage = () => {
   const handleCompleteInterview = async (transcript: any[]) => {
     if (!interviewId || !user?.id) return;
     
-    setIsGeneratingFeedback(true);
-    toast.loading('Saving interview and generating feedback...', { id: 'feedback-generation' });
+    toast.loading('Saving interview...', { id: 'save-interview' });
     
     try {
       console.log('Completing interview with transcript:', transcript);
@@ -92,19 +90,17 @@ const CodingInterviewPage = () => {
       console.log('Transcript save response:', data);
       
       if (response.ok) {
-        toast.success('Feedback generated successfully!', { id: 'feedback-generation' });
-        // Redirect to feedback page - feedback should be ready
+        toast.success('Interview saved! Generating feedback...', { id: 'save-interview' });
+        // Redirect to feedback page - feedback will be generated in background
         router.push(`/coding/${company}/${interviewId}/feedback`);
       } else {
-        toast.error(`Failed: ${data.error || 'Unknown error'}`, { id: 'feedback-generation' });
+        toast.error(`Failed: ${data.error || 'Unknown error'}`, { id: 'save-interview' });
         console.error('Failed to save transcript:', data);
-        setIsGeneratingFeedback(false);
       }
     } catch (error) {
       console.error('Error completing interview:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      toast.error(`Error: ${errorMessage}`, { id: 'feedback-generation' });
-      setIsGeneratingFeedback(false);
+      toast.error(`Error: ${errorMessage}`, { id: 'save-interview' });
     }
   };
 
@@ -148,21 +144,6 @@ const CodingInterviewPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Loading Overlay for Feedback Generation */}
-      {isGeneratingFeedback && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card border border-border rounded-lg p-8 max-w-md text-center shadow-lg">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Generating Your Feedback
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Our AI is analyzing your interview performance and code solution. This may take 30-60 seconds.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">

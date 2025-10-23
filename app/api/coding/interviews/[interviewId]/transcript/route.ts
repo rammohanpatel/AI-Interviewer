@@ -35,45 +35,26 @@ export async function POST(
 
     console.log('Updated interview with transcript and code');
 
-    // Generate feedback with timeout
-    const feedbackPromise = createCodingFeedback({
+    // Generate feedback asynchronously to avoid Vercel timeout
+    // This runs in the background without blocking the response
+    createCodingFeedback({
       interviewId,
       userId,
       transcript,
       code: code || '',
       question: interviewData.question,
+    }).then((feedbackResult) => {
+      console.log('Feedback generation completed:', feedbackResult);
+    }).catch((error) => {
+      console.error('Error generating feedback:', error);
     });
 
-    // Wait for feedback with 50 second timeout
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Feedback generation timeout')), 50000)
-    );
-
-    try {
-      const feedbackResult = await Promise.race([feedbackPromise, timeoutPromise]) as any;
-      console.log('Feedback generation completed:', feedbackResult);
-      
-      if (!feedbackResult.success) {
-        console.error('Failed to generate feedback:', feedbackResult.error);
-      }
-      
-      return NextResponse.json({ 
-        success: true,
-        message: 'Interview completed and feedback generated.',
-        interviewId,
-        feedbackId: feedbackResult.feedbackId
-      });
-    } catch (error) {
-      console.error('Error generating feedback (but interview saved):', error);
-      // Return success anyway since interview was saved
-      // Feedback can be regenerated later if needed
-      return NextResponse.json({ 
-        success: true,
-        message: 'Interview completed. Feedback generation in progress.',
-        interviewId,
-        warning: 'Feedback may take a moment to appear'
-      });
-    }
+    // Return success immediately - feedback will be available shortly
+    return NextResponse.json({ 
+      success: true,
+      message: 'Interview completed successfully. Feedback is being generated.',
+      interviewId
+    });
   } catch (error) {
     console.error('Error saving transcript:', error);
     return NextResponse.json({ 
