@@ -161,21 +161,27 @@ const CodingInterviewPage = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-180px)]">
-          {/* Left Panel - Video & Controls */}
-          <div className="lg:col-span-2 space-y-4 flex flex-col overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
+          {/* Left Panel - Problem Statement (Full Width on Mobile) */}
+          <div className="lg:col-span-1 flex flex-col gap-4 overflow-y-auto">
             <ProblemStatement question={question} />
-            <VideoFeed />
-            <VapiControls 
-              currentCode={currentCode} 
-              question={question} 
-              userName={user?.name || 'User'}
-              onInterviewComplete={handleCompleteInterview}
-            />
+            
+            {/* Video & Controls - Compact */}
+            <div className="space-y-3">
+              <div className="w-full max-w-sm mx-auto lg:max-w-full">
+                <VideoFeed />
+              </div>
+              <VapiControls 
+                currentCode={currentCode} 
+                question={question} 
+                userName={user?.name || 'User'}
+                onInterviewComplete={handleCompleteInterview}
+              />
+            </div>
           </div>
 
-          {/* Right Panel - Code Editor */}
-          <div className="lg:col-span-3 h-full">
+          {/* Right Panel - Code Editor (Larger) */}
+          <div className="lg:col-span-2 h-full">
             <CodeEditor 
               onCodeChange={(code) => {
                 setCurrentCode(code);

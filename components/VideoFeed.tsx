@@ -115,7 +115,7 @@ const VideoFeed = () => {
 
   return (
     <Card className="bg-card border-border shadow-lg">
-      <div className="relative aspect-video bg-muted min-h-[300px]">
+      <div className="relative aspect-video bg-muted min-h-[200px]">
         <video
           ref={videoRef}
           autoPlay

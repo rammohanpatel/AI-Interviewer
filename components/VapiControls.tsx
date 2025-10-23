@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-const VAPI_WEB_TOKEN = 'be7bbfd8-7bb9-4738-9c38-c1057d092167';
-const VAPI_WORKFLOW_ID = '16f36366-98ec-48f7-8e70-90549aae29b3';
+const VAPI_WEB_TOKEN = process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN || '';
+const VAPI_WORKFLOW_ID = process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID || '';
 
 interface VapiControlsProps {
   currentCode?: string;

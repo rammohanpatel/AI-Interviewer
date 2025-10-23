@@ -154,6 +154,8 @@ export async function createCodingFeedback(params: {
             - **Code Quality**: Clean, readable, and well-structured code with proper naming conventions.
             - **Communication**: How well they explained their thought process and approach.
             - **Testing & Edge Cases**: Consideration of edge cases and testing approach.
+
+            IMPORTANT: The totalScore should be the sum of all 5 category scores (each scored 0-10, so totalScore will be out of 50).
             
             Also provide:
             - A detailed code review analyzing their solution
