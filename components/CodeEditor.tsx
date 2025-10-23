@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface CodeEditorProps {
   onCodeChange?: (code: string) => void;
+  initialCode?: string;
 }
 
-const CodeEditor = ({ onCodeChange }: CodeEditorProps) => {
+const CodeEditor = ({ onCodeChange, initialCode }: CodeEditorProps) => {
   const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState('// Start coding here...\n');
+  const [code, setCode] = useState(initialCode || '// Start coding here...\n');
 
   const handleCodeChange = (value: string | undefined) => {
     const newCode = value || '';

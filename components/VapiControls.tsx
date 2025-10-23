@@ -11,13 +11,14 @@ const VAPI_WORKFLOW_ID = '16f36366-98ec-48f7-8e70-90549aae29b3';
 
 interface VapiControlsProps {
   currentCode?: string;
-  question?: string;
+  question?: Question | string;
   userName?: string;
+  onInterviewComplete?: (transcript: any[]) => void;
 }
 
 
 
-const VapiControls = ({ currentCode = '', question = '', userName = 'there' }: VapiControlsProps) => {
+const VapiControls = ({ currentCode = '', question = '', userName = 'there', onInterviewComplete }: VapiControlsProps) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -37,6 +38,16 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there' }: V
       console.log('Call ended');
       setIsConnected(false);
       toast.info('Interview ended');
+      
+      // Call the completion callback with transcript
+      if (onInterviewComplete && transcript.length > 0) {
+        const formattedTranscript = transcript.map((line, index) => ({
+          role: line.startsWith('user:') ? 'user' : 'assistant',
+          content: line.replace(/^(user:|assistant:)\s*/, ''),
+          timestamp: new Date().toISOString()
+        }));
+        onInterviewComplete(formattedTranscript);
+      }
     });
 
     vapiInstance.on('message', (message: VapiMessage) => {
@@ -60,9 +71,10 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there' }: V
     if (!vapi) return;
     
     try {
+      const questionText = typeof question === 'string' ? question : question?.title || '';
       await vapi.start(VAPI_WORKFLOW_ID, {
         variableValues: {
-          questions: question,
+          questions: questionText,
         }
       });
     } catch (error) {

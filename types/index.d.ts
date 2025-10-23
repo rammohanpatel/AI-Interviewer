@@ -98,6 +98,33 @@ interface TechIconProps {
   techStack: string[];
 }
 
+interface Question {
+  title: string;
+  description: string;
+  constraints: string[];
+  example: {
+    Input: string;
+    Output: string;
+    Explanation?: string;
+  };
+}
+
+interface CodingInterview {
+  id: string;
+  company: string;
+  userId: string;
+  question: Question;
+  transcript: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: string;
+  }>;
+  code: string;
+  feedback?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
 // Extend Window interface for audio context
 declare global {
   interface Window {

@@ -1,0 +1,55 @@
+[
+  {
+    "title": "Add Two Numbers",
+    "description": "You are given two **non-empty** linked lists representing two non-negative integers. The digits are stored in **reverse order**, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list. You may assume the two numbers do not contain any leading zero, except the number 0 itself.",
+    "constraints": [
+      "The number of nodes in each linked list is in the range [1, 100].",
+      "0 <= Node.val <= 9",
+      "It is guaranteed that the list represents a number that does not have leading zeros."
+    ],
+    "example": {
+      "Input": "l1 = [2, 4, 3], l2 = [5, 6, 4]",
+      "Output": "[7, 0, 8]",
+      "Explanation": "342 + 465 = 807."
+    }
+  },
+  {
+    "title": "3Sum",
+    "description": "Given an integer array nums, return all the triplets `[nums[i], nums[j], nums[k]]` such that `i != j`, `i != k`, and `j != k`, and `nums[i] + nums[j] + nums[k] == 0`. Notice that the solution set must not contain duplicate triplets.",
+    "constraints": [
+      "3 <= nums.length <= 3000",
+      "-10^5 <= nums[i] <= 10^5"
+    ],
+    "example": {
+      "Input": "nums = [-1, 0, 1, 2, -1, -4]",
+      "Output": "[[-1, -1, 2], [-1, 0, 1]]"
+    }
+  },
+  {
+    "title": "Container With Most Water",
+    "description": "You are given an integer array `height` of length `n`. There are `n` vertical lines drawn such that the two endpoints of the `ith` line are `(i, 0)` and `(i, height[i])`. Find two lines that together with the x-axis form a container that contains the most water. Return *the maximum amount of water a container can store*.",
+    "constraints": [
+      "n == height.length",
+      "2 <= n <= 10^5",
+      "0 <= height[i] <= 10^4"
+    ],
+    "example": {
+      "Input": "height = [1, 8, 6, 2, 5, 4, 8, 3, 7]",
+      "Output": "49"
+    }
+  },
+  {
+    "title": "Roman to Integer",
+    "description": "Roman numerals are represented by seven different symbols: `I`, `V`, `X`, `L`, `C`, `D` and `M`. Given a roman numeral, convert it to an integer.",
+    "constraints": [
+      "1 <= s.length <= 15",
+      "`s` contains only the characters ('I', 'V', 'X', 'L', 'C', 'D', 'M').",
+      "It is **guaranteed** that `s` is a valid roman numeral in the range [1, 3999]."
+    ],
+    "example": {
+      "Input": "s = \"III\"",
+      "Output": "3",
+      "Explanation": "III = 3."
+    }
+  }
+]

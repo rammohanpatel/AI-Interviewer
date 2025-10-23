@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Two Sum",
+    "description": "Given an array of integers `nums` and an integer `target`, return *indices of the two numbers such that they add up to `target`*. You may assume that each input would have **exactly one solution**, and you may not use the *same* element twice. You can return the answer in any order.",
+    "constraints": [
+      "2 <= nums.length <= 10^4",
+      "-10^9 <= nums[i] <= 10^9",
+      "-10^9 <= target <= 10^9",
+      "**Only one** valid answer exists."
+    ],
+    "example": {
+      "Input": "nums = [2, 7, 11, 15], target = 9",
+      "Output": "[0, 1]",
+      "Explanation": "Because nums[0] + nums[1] == 9, we return [0, 1]."
+    }
+  },
+  {
+    "title": "Longest Substring Without Repeating Characters",
+    "description": "Given a string `s`, find the length of the **longest substring** without repeating characters.",
+    "constraints": [
+      "0 <= s.length <= 5 * 10^4",
+      "`s` consists of English letters, digits, symbols and spaces."
+    ],
+    "example": {
+      "Input": "s = \"abcabcbb\"",
+      "Output": "3",
+      "Explanation": "The answer is \"abc\", with the length of 3."
+    }
+  },
+  {
+    "title": "Merge Two Sorted Lists",
+    "description": "You are given the heads of two sorted linked lists `list1` and `list2`. Merge the two lists in a one **sorted** list. The list should be made by splicing together the nodes of the first two lists. Return the head of the merged linked list.",
+    "constraints": [
+      "The number of nodes in both lists is in the range [0, 50].",
+      "-100 <= Node.val <= 100",
+      "`list1` and `list2` are both sorted in non-decreasing order."
+    ],
+    "example": {
+      "Input": "list1 = [1, 2, 4], list2 = [1, 3, 4]",
+      "Output": "[1, 1, 2, 3, 4, 4]"
+    }
+  },
+  {
+    "title": "Valid Parentheses",
+    "description": "Given a string `s` containing just the characters `(`, `)`, `{`, `}`, `[`, and `]`, determine if the input string is valid. An input string is valid if:\n\n1. Open brackets must be closed by the same type of brackets.\n2. Open brackets must be closed in the correct order.\n3. Every close bracket has a corresponding open bracket of the same type.",
+    "constraints": [
+      "1 <= s.length <= 10^4",
+      "`s` consists of parentheses only '()[]{}'"
+    ],
+    "example": {
+      "Input": "s = \"()[]{}\"",
+      "Output": "true"
+    }
+  },
+  {
+    "title": "Best Time to Buy and Sell Stock",
+    "description": "You are given an array `prices` where `prices[i]` is the price of a given stock on the `ith` day. You want to maximize your profit by choosing a **single day** to buy one stock and choosing a **different day in the future** to sell that stock. Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return `0`.",
+    "constraints": [
+      "1 <= prices.length <= 10^5",
+      "0 <= prices[i] <= 10^4"
+    ],
+    "example": {
+      "Input": "prices = [7, 1, 5, 3, 6, 4]",
+      "Output": "5",
+      "Explanation": "Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5."
+    }
+  }
+]
