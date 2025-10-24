@@ -66,7 +66,7 @@ const CodingInterviewPage = () => {
   const handleCompleteInterview = async (transcript: any[]) => {
     if (!interviewId || !user?.id) return;
     
-    toast.loading('Saving interview...', { id: 'save-interview' });
+    toast.loading('Saving interview and generating feedback...', { id: 'save-interview' });
     
     try {
       console.log('Completing interview with transcript:', transcript);
@@ -90,9 +90,15 @@ const CodingInterviewPage = () => {
       console.log('Transcript save response:', data);
       
       if (response.ok) {
-        toast.success('Interview saved! Generating feedback...', { id: 'save-interview' });
-        // Redirect to feedback page - feedback will be generated in background
-        router.push(`/coding/${company}/${interviewId}/feedback`);
+        if (data.feedbackGenerated) {
+          toast.success('Interview completed! Feedback is ready.', { id: 'save-interview' });
+        } else {
+          toast.success('Interview saved! Please wait for feedback...', { id: 'save-interview' });
+        }
+        // Small delay to let user see the success message
+        setTimeout(() => {
+          router.push(`/coding/${company}/${interviewId}/feedback`);
+        }, 1000);
       } else {
         toast.error(`Failed: ${data.error || 'Unknown error'}`, { id: 'save-interview' });
         console.error('Failed to save transcript:', data);
@@ -191,6 +197,7 @@ const CodingInterviewPage = () => {
                   question={question} 
                   userName={user?.name || 'User'}
                   onInterviewComplete={handleCompleteInterview}
+                  autoStart={true}
                 />
               </div>
               </div>

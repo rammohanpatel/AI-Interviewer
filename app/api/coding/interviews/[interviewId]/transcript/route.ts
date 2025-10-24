@@ -35,26 +35,36 @@ export async function POST(
 
     console.log('Updated interview with transcript and code');
 
-    // Generate feedback asynchronously to avoid Vercel timeout
-    // This runs in the background without blocking the response
-    createCodingFeedback({
-      interviewId,
-      userId,
-      transcript,
-      code: code || '',
-      question: interviewData.question,
-    }).then((feedbackResult) => {
+    // Generate feedback synchronously to ensure it's ready
+    console.log('Starting feedback generation...');
+    try {
+      const feedbackResult = await createCodingFeedback({
+        interviewId,
+        userId,
+        transcript,
+        code: code || '',
+        question: interviewData.question,
+      });
       console.log('Feedback generation completed:', feedbackResult);
-    }).catch((error) => {
-      console.error('Error generating feedback:', error);
-    });
-
-    // Return success immediately - feedback will be available shortly
-    return NextResponse.json({ 
-      success: true,
-      message: 'Interview completed successfully. Feedback is being generated.',
-      interviewId
-    });
+      
+      // Return success with feedback ready
+      return NextResponse.json({ 
+        success: true,
+        message: 'Interview completed successfully. Feedback is ready.',
+        interviewId,
+        feedbackGenerated: true
+      });
+    } catch (feedbackError) {
+      console.error('Error generating feedback:', feedbackError);
+      // Still return success for interview save, but note feedback failed
+      return NextResponse.json({ 
+        success: true,
+        message: 'Interview saved, but feedback generation failed.',
+        interviewId,
+        feedbackGenerated: false,
+        feedbackError: feedbackError instanceof Error ? feedbackError.message : 'Unknown error'
+      });
+    }
   } catch (error) {
     console.error('Error saving transcript:', error);
     return NextResponse.json({ 

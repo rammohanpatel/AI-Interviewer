@@ -1,4 +1,3 @@
-import { VapiMessage } from '@/types/vapi';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Vapi from '@vapi-ai/web';
 import { Button } from '@/components/ui/button';
@@ -14,11 +13,12 @@ interface VapiControlsProps {
   question?: Question | string;
   userName?: string;
   onInterviewComplete?: (transcript: any[]) => void;
+  autoStart?: boolean;
 }
 
 
 
-const VapiControls = ({ currentCode = '', question = '', userName = 'there', onInterviewComplete }: VapiControlsProps) => {
+const VapiControls = ({ currentCode = '', question = '', userName = 'there', onInterviewComplete, autoStart = false }: VapiControlsProps) => {
   const [vapi, setVapi] = useState<Vapi | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -109,7 +109,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       }
     });
 
-    vapiInstance.on('message', (message: VapiMessage) => {
+    vapiInstance.on('message', (message: any) => {
       console.log('Vapi Message received:', message);
       
       if (message.type === 'transcript' && message.transcript) {
@@ -215,7 +215,7 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
     };
   }, []); // Empty dependencies - we use refs for all state access
 
-  const startInterview = async () => {
+  const startInterview = useCallback(async () => {
     if (!vapi) return;
     
     setIsStarting(true);
@@ -232,7 +232,20 @@ const VapiControls = ({ currentCode = '', question = '', userName = 'there', onI
       toast.error('Failed to start interview');
       setIsStarting(false);
     }
-  };
+  }, [vapi, question, userName]);
+
+  // Auto-start interview if autoStart prop is true
+  useEffect(() => {
+    if (autoStart && vapi && question && !isConnected && !isStarting) {
+      console.log('Auto-starting interview...');
+      // Small delay to ensure everything is ready
+      const timer = setTimeout(() => {
+        startInterview();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart, vapi, question, isConnected, isStarting, startInterview]);
 
   const endInterview = () => {
     if (!vapi) return;
